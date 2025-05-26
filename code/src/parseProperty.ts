@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 
-interface PropertyData {
+export interface PropertyData {
   id: string;
   name: string;
   priceTag: number;
@@ -11,6 +11,8 @@ interface PropertyData {
   floor: number;
   camFee: number;
   url: string;
+  mrt: number;
+  bts: number;
 }
 
 export const parsePropertyData = (data: string) => {
@@ -39,29 +41,15 @@ export const parsePropertyData = (data: string) => {
       10,
     );
 
-    const priceTagFull = $(element)
-      .find('.price-tag')
-      .text()
-      .replaceAll('\n', '')
-      .trim();
-    const regex = /\((.*?)\)/;
-    const match = priceTagFull.match(regex);
-    const pricePerSqm = parseInt(
-      (match ? match[1] : '')
-        .replace('/SqM', '')
-        .replace('฿', '')
-        .replaceAll(',', ''),
-      10,
-    );
-
-    const livingArea = parseInt(
+    const livingArea = parseFloat(
       $(element)
         .find('.wrap-icon-info')
         .find('[data-tooltip="Living Area"]')
         .text()
         .trim(),
-      10,
     );
+
+    const pricePerSqm = parseFloat((priceTag / livingArea).toFixed(2));
 
     const areaData = $(element)
       .find('.wrap-icon-info')
@@ -84,7 +72,32 @@ export const parsePropertyData = (data: string) => {
       10,
     );
 
-    const camFee = parseInt(
+    const mrt = parseInt(
+      $(element)
+        .find(
+          'unit-info__basic-info.unit-info__basic-info__nearplace.dynamic-tooltip.area-tooltip',
+        )
+        .last()
+        .text()
+        .trim()
+        .replace(/MRT /g, '')
+        .replace(/ km/g, ''),
+      10,
+    );
+
+    const bts = parseFloat(
+      $(element)
+        .find(
+          'unit-info__basic-info.unit-info__basic-info__nearplace.dynamic-tooltip.area-tooltip',
+        )
+        .last()
+        .text()
+        .trim()
+        .replace(/BTS /g, '')
+        .replace(/ km/g, ''),
+    );
+
+    const camFee = parseFloat(
       $(element)
         .find('.manage-tag__item')
         .eq(1)
@@ -93,7 +106,6 @@ export const parsePropertyData = (data: string) => {
         .replace('฿', '')
         .replaceAll(',', '')
         .trim(),
-      10,
     );
 
     const pageUrl =
@@ -110,8 +122,16 @@ export const parsePropertyData = (data: string) => {
       floor: floor,
       camFee: camFee,
       url: pageUrl,
+      mrt: mrt,
+      bts: bts,
     });
   });
 
   return propertyData;
+};
+
+export const parsePageInfo = (data: string) => {
+  const $ = cheerio.load(data);
+
+  return parseInt($('.result-search__h2').text().trim(), 10);
 };

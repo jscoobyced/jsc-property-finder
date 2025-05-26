@@ -1,33 +1,51 @@
-import fs from 'fs';
-import path from 'path';
+const SEARCH_URL =
+  'https://www.fazwaz.com/property-for-sale/thailand/bangkok?mapEnable=0&type=condo,apartment,penthouse&order_by=rank|asc&price=PRICEMIN,PRICEMAX&living_area=AREAMIN,null&price_per_sqm=PRICESQMMIN,PRICESQMMAX&page=PAGE';
 
-const filePath = path.join(__dirname, 'search.html');
-
-const searchURl =
-  'https://www.fazwaz.com/property-for-sale/thailand/bangkok?mapEnable=0&type=condo,apartment,penthouse&order_by=rank|asc&price=1000000,5000000&living_area=50,null&price_per_sqm=60000,95000';
+const PER_PAGE = 30;
 
 export interface SearchResult {
   success: boolean;
   content: string;
 }
 
-export const getSearchFile = async (): Promise<SearchResult> => {
-  const result: SearchResult = { success: false, content: '' };
-  if (fs.existsSync(filePath)) {
-    const file = await fs.promises.readFile(filePath, 'utf8');
-    if (file) {
-      result.success = true;
-      result.content = file;
-      return result;
-    }
-    console.log('File does not exist:', filePath);
-  }
-  return result;
+export interface SearchParams {
+  priceMin: number;
+  priceMax: number;
+  areaMin: number;
+  pricesqmMin: number;
+  pricesqmMax: number;
+  page: number;
+}
+
+export const buildSearchUrl = (searchParams: SearchParams) => {
+  const url = SEARCH_URL.replace('PRICEMIN', searchParams.priceMin.toString())
+    .replace('PRICEMAX', searchParams.priceMax.toString())
+    .replace('AREAMIN', searchParams.areaMin.toString())
+    .replace('PRICESQMMIN', searchParams.pricesqmMin.toString())
+    .replace('PRICESQMMAX', searchParams.pricesqmMax.toString())
+    .replace('PAGE', searchParams.page.toString());
+  return url;
 };
 
-export const getSearchResult = async (): Promise<SearchResult> => {
+export const getNextPageNumber = (
+  currentPage: number,
+  totalPages: number,
+): number => {
+  if (currentPage < Math.ceil(totalPages / PER_PAGE)) {
+    return currentPage + 1;
+  }
+  return -1;
+};
+
+export const getSearchResult = async (
+  searchUrl: string,
+): Promise<SearchResult> => {
   const result: SearchResult = { success: false, content: '' };
-  const response = await fetch(searchURl);
+
+  const response = await fetch(searchUrl, {
+    method: 'GET',
+    referrer: 'https://www.fazwaz.com',
+  });
   try {
     const data = await response.text();
     result.content = data;
