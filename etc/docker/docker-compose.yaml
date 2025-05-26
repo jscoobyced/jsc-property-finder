@@ -1,0 +1,15 @@
+version: "3.8"
+services:
+  node:
+    image: node:lts-slim
+    user: "${JSC_UID}:${JSC_GID}"
+    volumes:
+      - "${PWD}/code/:/app/"
+
+  production:
+    build:
+      context: ../..
+      dockerfile: etc/docker/Dockerfile
+    env_file: ../../code/.env
+    ports:
+      - 3000:3000

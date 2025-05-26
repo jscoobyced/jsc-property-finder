@@ -1,0 +1,14 @@
+@eslint/js
+@types/jest
+@types/node
+@types/supertest
+eslint
+jest
+nodemon
+prettier
+prettier-plugin-organize-imports
+supertest
+ts-jest
+ts-node
+typescript
+typescript-eslint
